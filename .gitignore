@@ -5,3 +5,4 @@ data/results.jsonl
 data/*.log
 data/download_failures.txt
 __pycache__/
+release/

@@ -41,10 +41,10 @@ value by between 3e-17 and 1.95e-16, consistent with coordinates rounded to 16 o
   claiming a cosine 1e-9 below the exact maximum gives FAIL; claiming 2e-12 above gives BETTER.
 - Structural: (24,196560) 452,088,000 contact pairs = 196560*4600/2; (23,4600) 2,049,300 = 4600*891/2;
   (64,4224) 4,325,376 = 4224*2048/2.
-- Two defects found and fixed in the certifier during development, both by the data: an open-path
-  pruning that was unsound (removed) and a float overflow in the reporting line for files with
-  more than 150 decimals (replaced by exact rational conversion). Neither affected a verdict that was
-  reported.
+- Two defects found and fixed in the certifier during development, both by the data: coordinates
+  written in exponent notation were not parsed exactly (now parsed through Decimal), and a float
+  overflow in the reporting line for files with more than 150 decimals (replaced by exact rational
+  conversion). Neither affected a verdict that was reported.
 
 ## Not checked
 
