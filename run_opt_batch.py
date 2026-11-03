@@ -3,11 +3,13 @@
     python3 run_opt_batch.py [workers]      (default 8 workers)
 
 Reads flagged_entries.json (the entries the table marks as needing more optimization),
-downloads their coordinate files from spherical-codes.org into coords/ (skipping ones
-already present), and runs optimize.hybrid on each, largest entries first.  Resumable:
-entries already in opt_results.jsonl are skipped.  A candidate whose floating point
-maximum cosine beats the table is written to improved/; nothing written there counts
-until certify_all.py has certified it exactly.  Stop any time with Ctrl-C."""
+downloads any missing coordinate files from spherical-codes.org into data/coords/, and runs
+optimize.hybrid on each, largest entries first.  Resumable: entries already in
+data/opt/opt_results.jsonl are skipped.  A candidate whose floating point maximum cosine
+beats the table is written to candidates/new/; nothing written there counts until
+certify_all.py has certified it exactly:
+
+    python3 certify_all.py --workers 4 candidates/new"""
 import json, os, sys, time, urllib.request, multiprocessing as mp
 os.environ.setdefault('OMP_NUM_THREADS', '1'); os.environ.setdefault('OPENBLAS_NUM_THREADS', '1'); os.environ.setdefault('MKL_NUM_THREADS', '1')
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
@@ -15,7 +17,8 @@ import numpy as np
 from optimize import hybrid, load
 
 E = json.load(open(os.path.join(HERE, 'flagged_entries.json')))
-COORDS = os.path.join(HERE, 'coords'); IMP = os.path.join(HERE, 'improved'); RES = os.path.join(HERE, 'opt_results.jsonl')
+COORDS = os.path.join(HERE, 'data', 'coords'); IMP = os.path.join(HERE, 'candidates', 'new'); RES = os.path.join(HERE, 'data', 'opt', 'opt_results.jsonl')
+os.makedirs(os.path.dirname(RES), exist_ok=True)
 os.makedirs(COORDS, exist_ok=True); os.makedirs(IMP, exist_ok=True)
 
 def fetch(e):

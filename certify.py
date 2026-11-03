@@ -14,12 +14,18 @@ error bound is used only to decide which pairs need the exact check.
 
 Verdicts
   PASS           all pairs satisfy the inequality and the maximum exceeds c - 1e-12 (c is the correct ceiling)
-  PASS_ROUNDING  some pair exceeds c, but by at most 1e-14: the table states the exact value of an
-                 ideal configuration and the file is its double precision approximation (coordinates
-                 printed to 16 or 17 significant digits perturb a cosine by at most about 1e-15 in 32 dimensions)
+  PASS_ROUNDING  some pair exceeds c, but by at most 1e-14, and c is an ideal value: a short exact
+                 decimal (at most 6 decimals, such as 0.25 or 0.375) or a root of the listed minimal
+                 polynomial.  The file is then a double precision approximation of the ideal configuration
+                 (coordinates printed to 16 or 17 significant digits perturb a cosine by at most about
+                 1e-15 in 32 dimensions)
+  CEILING_LOW    some pair exceeds c by at most 1e-14 and c is not an ideal value: the stated value is
+                 one unit too low in the 12th decimal (the correct ceiling of the file's maximum is c + 1e-12)
   BETTER         all pairs satisfy it and the exact maximum is at most c - 1e-12 (table could state a smaller value)
   FAIL           some pair exceeds c + 1e-14; the exact maximum is reported
-  BADFILE   wrong number of points or coordinates, non-numeric data, or a zero vector
+  BADFILE        wrong number of points or coordinates, fewer than 2 points, non-numeric data, a zero
+                 vector, a coordinate of size 1e300 or more, or a row whose largest coordinate is below
+                 1e-290 (where the floating point screen could not be trusted)
 
 Also reported: exact maximum cosine (as a 15-digit decimal with the exact
 rational available), number of pairs at the maximum (within 1e-9 of it in
@@ -51,25 +57,62 @@ def to_int_matrix(pts):
         for d in row:
             e = d.as_tuple().exponent
             if e < 0: K = max(K, -e)
-    M = [[int(d.scaleb(K)) for d in row] for row in D]
-    for row, drow in zip(M, D):
-        for v, d in zip(row, drow):
-            assert Decimal(v).scaleb(-K) == d
+    S = 10 ** K
+    M = []
+    for row in D:
+        out = []
+        for d in row:
+            f = Fraction(d) * S            # exact: Fraction(Decimal) is exact, and d * 10^K is an integer
+            if f.denominator != 1: raise ValueError('coordinate %s not exactly representable at 10^-%d' % (d, K))
+            out.append(f.numerator)
+        M.append(out)
     return M, K
 
-def exact_cos_sq_cmp(xi, xj, num, den):
-    """Return sign of  <xi,xj>/(|xi||xj|) - num/den  exactly (num/den >= 0 assumed). """
-    ip = sum(a * b for a, b in zip(xi, xj))
-    if ip <= 0:
-        return -1 if num > 0 else (0 if ip == 0 else -1)
+def cos_cmp(ip, nx, ny, num, den):
+    """Exact sign of  ip / sqrt(nx*ny) - num/den  for integers, nx, ny > 0, den > 0, any signs."""
+    if ip == 0:
+        return (0 > num) - (0 < num)          # cosine 0 against num/den
+    if ip > 0 and num <= 0:
+        return 1
+    if ip < 0 and num >= 0:
+        return -1
     lhs = ip * ip * den * den
-    rhs = num * num * sum(a * a for a in xi) * sum(b * b for b in xj)
-    return (lhs > rhs) - (lhs < rhs)
+    rhs = num * num * nx * ny
+    d = (lhs > rhs) - (lhs < rhs)
+    return d if ip > 0 else -d        # both negative: the larger magnitude is the smaller cosine
+
+def cos_pair_cmp(a, b):
+    """Exact sign of cos_a - cos_b, each given as (ip, nx, ny)."""
+    ia, xa, ya = a[:3]; ib, xb, yb = b[:3]
+    if ia >= 0 and ib <= 0: return 0 if (ia == 0 and ib == 0) else 1
+    if ia <= 0 and ib >= 0: return -1
+    lhs = ia * ia * xb * yb; rhs = ib * ib * xa * ya
+    d = (lhs > rhs) - (lhs < rhs)
+    return d if ia > 0 else -d
+
+def exact_cos_sq_cmp(xi, xj, num, den):
+    """Exact sign of  <xi,xj>/(|xi||xj|) - num/den  for integer vectors, any signs."""
+    ip = sum(a * b for a, b in zip(xi, xj))
+    return cos_cmp(ip, sum(a * a for a in xi), sum(b * b for b in xj), num, den)
+
+def is_ideal_value(cstr, poly):
+    """An ideal value is a listed polynomial root or a short exact decimal (at most 6 decimals)."""
+    if poly: return True
+    frac = cstr.strip().lstrip('-').split('.')[1] if '.' in cstr else ''
+    return len(frac.rstrip('0')) <= 6
 
 def exact_cos(xi, xj):
     ip = sum(a * b for a, b in zip(xi, xj))
     nx = sum(a * a for a in xi); ny = sum(b * b for b in xj)
     return ip, nx, ny  # cosine = ip / sqrt(nx*ny)
+
+def cos_str(ip, nx, ny):
+    """The cosine ip / sqrt(nx*ny) to 15 decimals, from exact arithmetic (50 digit Decimal)."""
+    from decimal import Decimal, localcontext, ROUND_HALF_EVEN
+    with localcontext() as ctx:
+        ctx.prec = 50
+        v = Decimal(ip) / (Decimal(nx) * Decimal(ny)).sqrt()
+        return str(v.quantize(Decimal('1e-15'), rounding=ROUND_HALF_EVEN))
 
 def cos_from_parts(ip, nx, ny):
     # exact rational square, converted to float only at the end (big integers safe)
@@ -85,17 +128,31 @@ def certify(dim, n, cstr, path, poly=None):
         res['verdict'] = 'BADFILE'; res['note'] = 'unreadable: ' + repr(ex); return res
     if len(pts) != n or any(len(r) != dim for r in pts):
         res['verdict'] = 'BADFILE'; res['note'] = 'shape %dx%s, expected %dx%d' % (len(pts), {len(r) for r in pts}, n, dim); return res
+    if n < 2:
+        res['verdict'] = 'BADFILE'; res['note'] = 'fewer than 2 points'; return res
     try:
         M, K = to_int_matrix(pts)
     except Exception as ex:
         res['verdict'] = 'BADFILE'; res['note'] = repr(ex); return res
     res['decimals'] = K
+    # range guard for the floating point screen: every coordinate must convert to a finite double
+    # (|x| < 1e300), and every row's largest coordinate must be at least 1e-290 so that scaling the
+    # row by it is exact enough.  Tiny entries next to normal ones are harmless after scaling.
+    hi = 10 ** (300 + K); lo = Fraction(10 ** K, 10 ** 290)
+    for row in M:
+        m = max(abs(v) for v in row)
+        if m >= hi or (m != 0 and m < lo):
+            res['verdict'] = 'BADFILE'; res['note'] = 'coordinate magnitude outside the floating point range of the screen'; return res
     # floating screen
     X = np.array([[float(s) for s in r] for r in pts], dtype=np.float64)
-    norms = np.sqrt((X * X).sum(axis=1))
-    if np.any(norms == 0):
+    if any(all(v == 0 for v in row) for row in M):
         res['verdict'] = 'BADFILE'; res['note'] = 'zero vector'; return res
-    Xn = X / norms[:, None]
+    # scale each row by its largest entry before squaring so the norm cannot overflow or underflow
+    Xs = X / np.max(np.abs(X), axis=1)[:, None]
+    norms = np.sqrt((Xs * Xs).sum(axis=1))
+    Xn = Xs / norms[:, None]
+    if not np.isfinite(Xn).all():
+        res['verdict'] = 'BADFILE'; res['note'] = 'non-finite value in the floating point screen'; return res
     # rigorous bound on |computed cosine - true cosine| for normalized float computation:
     # inner product of d terms: relative error <= gamma_d, normalization adds a few ulps; use a safe 20*d*U + 1e-15.
     bound = 20 * dim * U + 1e-15
@@ -141,18 +198,11 @@ def certify(dim, n, cstr, path, poly=None):
     best = None
     for i, j in near_max:
         ip, nx, ny = exact_cos(M[i], M[j])
-        if best is None:
+        if best is None or cos_pair_cmp((ip, nx, ny), best) > 0:
             best = (ip, nx, ny, i, j)
-        else:
-            bip, bnx, bny, _, _ = best
-            # compare ip/sqrt(nx ny) vs bip/sqrt(bnx bny)
-            if ip > 0 and bip > 0:
-                if ip * ip * bnx * bny > bip * bip * nx * ny: best = (ip, nx, ny, i, j)
-            elif ip > bip:  # sign-based cases
-                best = (ip, nx, ny, i, j)
     ip, nx, ny, bi, bj = best
     exact_max = cos_from_parts(ip, nx, ny)
-    res['exact_max_cos'] = '%.15f' % exact_max
+    res['exact_max_cos'] = cos_str(ip, nx, ny)
     res['max_pair'] = [bi, bj]
     res['stated_minus_actual_e12'] = round((float(cstated) - exact_max) * 1e12, 3)
     # contacts: pairs within 1e-9 of the max (floating)
@@ -163,12 +213,12 @@ def certify(dim, n, cstr, path, poly=None):
     if viol:
         res['verdict'] = 'FAIL'; res['violating_pairs'] = viol
     elif over_exact:
-        res['verdict'] = 'PASS_ROUNDING'; res['pairs_over_by_rounding'] = over_exact
+        res['verdict'] = 'PASS_ROUNDING' if is_ideal_value(cstr, poly) else 'CEILING_LOW'
+        res['pairs_over_by_rounding'] = over_exact
     else:
         lower = cstated - Fraction(1, 10 ** 12)
-        # exact: is max < lower ?  i.e. all near_max pairs below lower
-        below = all(exact_cos_sq_cmp(M[i], M[j], lower.numerator, lower.denominator) <= 0 for i, j in near_max) if lower > 0 else False
-        res['verdict'] = 'BETTER' if below else 'PASS'
+        # BETTER: the exact maximum (attained by the best pair) is at most c - 1e-12
+        res['verdict'] = 'BETTER' if cos_cmp(ip, nx, ny, lower.numerator, lower.denominator) <= 0 else 'PASS'
     if poly:
         res['poly_check'] = check_poly(poly, cstated)
     return res
@@ -182,7 +232,7 @@ def certify_integer_exact(res, M, X, dim, n, cstated, poly):
     p, q = cstated.numerator, cstated.denominator
     B = 256 if n > 4096 else n
     gmax = -2.0; maxcount = 0; row_has_contact = np.zeros(n, dtype=bool)
-    viol = 0; best = None; exact_ok = (q * q * (dim * (X.max() ** 2)) ** 2 < 2 ** 52) and (p * p * nx.max() ** 2 < 2 ** 52)
+    viol = 0; best = None; exact_ok = (q * q * (dim * (np.abs(X).max() ** 2)) ** 2 < 2 ** 52) and (p * p * nx.max() ** 2 < 2 ** 52)
     for i0 in range(0, n, B):
         G = X[i0:i0 + B] @ X.T  # exact integers in float64
         for a in range(G.shape[0]):
@@ -196,27 +246,38 @@ def certify_integer_exact(res, M, X, dim, n, cstated, poly):
         # exact threshold test on this block
         if exact_ok:
             lhs = (q * q) * G * G; rhs = (p * p) * np.outer(nx[i0:i0 + B], nx)
-            v = np.nonzero((G > 0) & (lhs > rhs)); viol += len(v[0])
+            valid = np.isfinite(G)
+            if p >= 0:   # cos > c  <=>  ip > 0 and q^2 ip^2 > p^2 nx ny
+                v = np.nonzero(valid & (G > 0) & (lhs > rhs))
+            else:        # c < 0:  cos > c  <=>  ip >= 0, or ip < 0 and q^2 ip^2 < p^2 nx ny
+                v = np.nonzero(valid & ((G >= 0) | (lhs < rhs)))
+            viol += len(v[0])
         else:
             rows2, cols2 = np.nonzero(C > float(cstated) - 1e-9)
             for a, j in zip(rows2.tolist(), cols2.tolist()):
                 if exact_cos_sq_cmp(M[i0 + a], M[j], p, q) > 0: viol += 1
-        # exact max among this block's maximal pairs
+        # exact max among this block's near-maximal pairs: every distinct (ip, nx_i, nx_j) value
+        # within 1e-12 of the block maximum is compared exactly (lattice files have very many ties
+        # but few distinct values, so this stays cheap)
         rr, cc = np.nonzero(C >= bm - 1e-12)
-        for a, j in zip(rr[:50].tolist(), cc[:50].tolist()):
-            ip, nxi, nyj = exact_cos(M[i0 + a], M[j])
-            if best is None or (ip > 0 and best[0] > 0 and ip * ip * best[1] * best[2] > best[0] * best[0] * nxi * nyj) or (ip > best[0] and not (ip > 0 and best[0] > 0)):
-                best = (ip, nxi, nyj, i0 + a, j)
+        seen = {}
+        for a, j in zip(rr.tolist(), cc.tolist()):
+            key = (int(G[a, j]), int(nx[i0 + a]), int(nx[j]))
+            if key not in seen: seen[key] = (i0 + a, j)
+        for (ipf, nxf, nyf), (i, j) in seen.items():
+            ip, nxi, nyj = exact_cos(M[i], M[j])
+            if best is None or cos_pair_cmp((ip, nxi, nyj), best) > 0:
+                best = (ip, nxi, nyj, i, j)
     ip, nxi, nyj, bi, bj = best
     exact_max = cos_from_parts(ip, nxi, nyj)
-    res['exact_max_cos'] = '%.15f' % exact_max; res['max_pair'] = [bi, bj]
+    res['exact_max_cos'] = cos_str(ip, nxi, nyj); res['max_pair'] = [bi, bj]
     res['stated_minus_actual_e12'] = round((float(cstated) - exact_max) * 1e12, 3)
     res['contact_pairs'] = maxcount; res['rattlers_1e-9'] = int((~row_has_contact).sum()); res['path'] = 'integer_exact'
     if viol:
         res['verdict'] = 'FAIL'; res['violating_pairs'] = int(viol)
     else:
         lower = cstated - Fraction(1, 10 ** 12)
-        res['verdict'] = 'BETTER' if (lower > 0 and exact_cos_sq_cmp(M[bi], M[bj], lower.numerator, lower.denominator) <= 0) else 'PASS'
+        res['verdict'] = 'BETTER' if cos_cmp(ip, nxi, nyj, lower.numerator, lower.denominator) <= 0 else 'PASS'
     if poly: res['poly_check'] = check_poly(poly, cstated)
     return res
 

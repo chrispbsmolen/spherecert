@@ -6,3 +6,12 @@ data/*.log
 data/download_failures.txt
 __pycache__/
 release/
+data/coords
+data/run_all.log
+data/opt/
+candidates/
+data/*.jsonl
+data/*.log
+data/code_hashes_at_run.txt
+data/run_big.py
+data/release_before_review/

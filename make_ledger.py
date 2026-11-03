@@ -3,14 +3,15 @@ One row per table entry.  Coordinate files are identified by SHA-256 of the byte
 served by spherical-codes.org on the snapshot date; they are not redistributed."""
 import json, csv, hashlib, os, platform, datetime, collections, subprocess
 
-W = '.'
+W = os.path.dirname(os.path.abspath(__file__))
 E = {(e['dim'], e['n']): e for e in json.load(open(W + '/data/entries.json'))}
 R = {}
 for line in open(W + '/data/results.jsonl'):
     r = json.loads(line); R[(r['dim'], r['n'])] = r
 snapshot = open(W + '/data/SNAPSHOT_DATE').read().strip() if os.path.exists(W + '/data/SNAPSHOT_DATE') else '2026-11-02'
 commit = subprocess.run(['git', '-C', W, 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True).stdout.strip() or 'uncommitted'
-stamp = 'spherecert %s %s %s' % (commit, datetime.date.today().isoformat(), platform.system() + '-' + platform.machine())
+code = hashlib.sha256(open(W + '/certify.py', 'rb').read()).hexdigest()[:12]
+stamp = 'spherecert %s certify.py-sha256:%s %s %s' % (commit, code, datetime.date.today().isoformat(), platform.system() + '-' + platform.machine())
 os.makedirs(W + '/results', exist_ok=True)
 fields = ['dim', 'n', 'stated_cosine', 'optimal_mark', 'needs_opt_mark', 'has_poly', 'verdict', 'method', 'exact_max_cosine',
           'stated_minus_exact_e12', 'pairs_over_by_rounding', 'violating_pairs', 'contact_pairs', 'rattlers_1e-9', 'poly_check',

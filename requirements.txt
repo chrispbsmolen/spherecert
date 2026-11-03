@@ -1,0 +1,8 @@
+# certify.py, oracle.py, selftest.py, run_all.py, certify_all.py
+numpy
+# check_polys.py (irreducibility over Q)
+sympy
+# optimize.py, lp_bound.py
+scipy
+# recheck_top.py (independent high precision recheck)
+mpmath

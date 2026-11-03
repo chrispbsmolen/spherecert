@@ -15,7 +15,7 @@ sys.path.insert(0, '.')
 from certify import certify, parse_coords, to_int_matrix, exact_cos
 from oracle import oracle
 getcontext().prec = 60
-W = '.'
+W = os.path.dirname(os.path.abspath(__file__))
 E = {(e['dim'], e['n']): e for e in json.load(open(W + '/data/entries.json'))}
 OUT = W + '/results/certify_all.jsonl'
 
@@ -40,7 +40,8 @@ def work(path):
     t0 = time.time()
     dim, n = map(int, os.path.basename(path)[:-4].split('_'))
     e = E[(dim, n)]; src = os.path.basename(os.path.dirname(path))
-    rec = dict(dim=dim, n=n, source=src, file=path, table_cosine=e['cosine'])
+    rel = os.path.relpath(path, W)
+    rec = dict(dim=dim, n=n, source=src, file=rel, table_cosine=e['cosine'])
     try:
         r0 = certify(dim, n, '1.0', path)
         i, j = r0['max_pair']
@@ -62,11 +63,11 @@ def work(path):
 if __name__ == '__main__':
     done = set()
     if os.path.exists(OUT):
-        for l in open(OUT): done.add(json.loads(l)['file'])
+        for l in open(OUT): done.add(os.path.normpath(json.loads(l)['file']))
     args = sys.argv[1:]; nw = 1
     if args[:1] == ['--workers']: nw = int(args[1]); args = args[2:]
     files = [os.path.abspath(f) for d in args for f in sorted(glob.glob(os.path.join(d, '*.txt')))]
-    todo = [f for f in files if f not in done]
+    todo = [f for f in files if os.path.normpath(os.path.relpath(f, W)) not in done]
     todo.sort(key=lambda f: os.path.getsize(f))
     print('files', len(files), 'todo', len(todo), flush=True)
     with Pool(nw) as pool, open(OUT, 'a') as out:

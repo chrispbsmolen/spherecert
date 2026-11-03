@@ -1,6 +1,6 @@
-"""For every entry with a listed minimal polynomial: (1) irreducibility over Q (sympy factor_list,
-with a per-polynomial time limit), (2) that the stated cosine lies within 1e-12 of a real root
-(already checked exactly by certify.py; repeated here with mpmath roots for the record).
+"""For every entry with a listed minimal polynomial: irreducibility over Q and the content of the
+polynomial (sympy factor_list, with a per-polynomial time limit).  The root check, that the stated
+cosine lies within 1e-12 of a root, is done exactly by certify.py (check_poly).
 Writes results/poly_checks.csv."""
 import json, csv, multiprocessing as mp, sys, time
 sys.path.insert(0, '.')
