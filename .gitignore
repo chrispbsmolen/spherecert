@@ -1,0 +1,7 @@
+data/coords/
+data/index.html
+data/plain.txt
+data/results.jsonl
+data/*.log
+data/download_failures.txt
+__pycache__/
