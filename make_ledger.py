@@ -9,7 +9,7 @@ R = {}
 for line in open(W + '/data/results.jsonl'):
     r = json.loads(line); R[(r['dim'], r['n'])] = r
 snapshot = open(W + '/data/SNAPSHOT_DATE').read().strip() if os.path.exists(W + '/data/SNAPSHOT_DATE') else '2026-11-02'
-commit = subprocess.run(['git', '-C', W, 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True).stdout.strip() or 'uncommitted'
+commit = subprocess.run(['git', '-C', W, 'log', '-1', '--format=%h', '--', 'certify.py'], capture_output=True, text=True).stdout.strip() or 'uncommitted'  # last commit that changed certify.py
 code = hashlib.sha256(open(W + '/certify.py', 'rb').read()).hexdigest()[:12]
 stamp = 'spherecert %s certify.py-sha256:%s %s %s' % (commit, code, datetime.date.today().isoformat(), platform.system() + '-' + platform.machine())
 os.makedirs(W + '/results', exist_ok=True)

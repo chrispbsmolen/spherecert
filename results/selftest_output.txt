@@ -1,0 +1,34 @@
+Part A: constructed cases
+simplex_exact                      certify PASS          oracle PASS          expected PASS ok
+simplex_claim_too_low              certify FAIL          oracle FAIL          expected FAIL ok
+simplex_claim_high                 certify BETTER        oracle BETTER        expected BETTER ok
+negative_claim                     certify FAIL          oracle FAIL          expected FAIL ok
+negative_claim_ok                  certify PASS          oracle PASS          expected PASS ok
+cross_polytope                     certify PASS          oracle PASS          expected PASS ok
+cross_claim_negative               certify FAIL          oracle FAIL          expected FAIL ok
+long_decimals_exact                certify PASS          oracle PASS          expected PASS ok
+exceed_nonideal_5e-15              certify CEILING_LOW   oracle CEILING_LOW   expected CEILING_LOW ok
+exceed_nonideal_5e-15_listed       certify PASS          oracle PASS          expected PASS ok
+exceed_ideal_0.25_by_5e-15         certify PASS_ROUNDING oracle PASS_ROUNDING expected PASS_ROUNDING ok
+exceed_0.25_by_2e-14               certify FAIL          oracle FAIL          expected FAIL ok
+exceed_0.25_by_1e-13               certify FAIL          oracle FAIL          expected FAIL ok
+duplicate                          certify FAIL          oracle FAIL          expected FAIL ok
+scaled_duplicate                   certify FAIL          oracle FAIL          expected FAIL ok
+exponent_notation                  certify PASS_ROUNDING oracle PASS_ROUNDING expected PASS_ROUNDING ok
+exponent_notation_exact            certify PASS          oracle PASS          expected PASS ok
+large_1e200                        certify FAIL          oracle FAIL          expected FAIL ok
+tiny_1e-160                        certify FAIL          oracle FAIL          expected FAIL ok
+tiny_entries_ok                    certify PASS          oracle PASS          expected PASS ok
+overflow_1e400                     certify BADFILE       expected BADFILE ok
+row_underflow_1e-300               certify BADFILE       expected BADFILE ok
+zero_vector                        certify BADFILE       expected BADFILE ok
+one_point                          certify BADFILE       expected BADFILE ok
+wrong_shape                        certify BADFILE       expected BADFILE ok
+
+Part B: table files
+differential: 60 entries compared, 0 disagreements
+perturbation tests on 5,56: moved point -> FAIL, underclaim -> FAIL, overclaim -> BETTER  ok
+perturbation tests on 24,57: moved point -> FAIL, underclaim -> FAIL, overclaim -> BETTER  ok
+perturbation tests on 9,66: moved point -> FAIL, underclaim -> FAIL, overclaim -> BETTER  ok
+
+ALL TESTS PASS

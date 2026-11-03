@@ -51,11 +51,11 @@ Improved entries by dimension: 5: 7, 6: 78, 7: 86, 8: 299, 9: 67, 10: 124, 11: 2
 
 - `results/improvements_ledger.csv`: one row per improved entry, with the table value, the certified value, the gain, the run, and the SHA-256 of the coordinate file. sha256 of the ledger: `253026583b08eb5b5140ace1ab5505d41b2c831921a26e897df1ad418942357e`.
 - `results/certify_all.jsonl`: the record of every candidate file, accepted or not.
-- The coordinate files are in the release archive `improved_codes_2026-11-03.tar.gz` (one file `improved/<dim>_<n>.txt` per entry, in the same format as spherical-codes.org, plus `SHA256SUMS`).
+- The coordinate files are in the release archive `improved_codes_2026-11-03.tar.gz` (one file `improved/<dim>_<n>.txt` per entry, in the same format as spherical-codes.org, plus `SHA256SUMS`, checked with `sha256sum -c SHA256SUMS` in the unpacked folder).
 
 ## Independent checks
 
-Besides the oracle for n <= 150, the 40 entries with the largest gains were rechecked with separate code: point count and dimension, distinctness of the normalized points, and the maximum cosine recomputed at 40 significant digits with mpmath over the twelve largest floating point pairs. All 40 agree with the certified values to 1e-12 and lie below the table values.
+Besides the oracle for n <= 150, the 40 entries with the largest gains were rechecked by `recheck_top.py`, which shares no code with certify.py: point count and dimension, distinctness of the normalized points, and the maximum cosine recomputed at 40 significant digits with mpmath over the 24 largest floating point pairs. Result (from results/recheck_top.txt): problems: 0 of 40.
 
 ## Not claimed
 
