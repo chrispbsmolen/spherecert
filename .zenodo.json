@@ -1,0 +1,31 @@
+{
+  "title": "spherecert: an exact certifier for the table of spherical codes, with certified improvements",
+  "upload_type": "software",
+  "description": "<p>An exact certifier for the entries of Henry Cohn's table of spherical codes (https://spherical-codes.org/; data set https://hdl.handle.net/1721.1/153543), and certified improvements for entries the table marks as needing more optimization.</p><p>For each entry, certify.py proves in exact integer arithmetic on the printed decimals that every pair of points in the coordinate file has cosine at most the stated value. On the snapshot of 2 November 2026 all 14,894 entries passed (14,826 PASS, 66 PASS_ROUNDING, 2 CEILING_LOW where the printed 12-decimal value is one unit too low), and all 707 listed minimal polynomials were confirmed irreducible over Q with a root in [c - 1e-12, c], where c is the stated value.</p><p>An optimizer was run on the 4,252 entries flagged as needing more optimization, and every candidate was then certified. 3,650 entries improved; their coordinate files are attached to GitHub release v2026.11.03 (improved_codes_2026-11-03.tar.gz, with SHA256SUMS). Please cite Henry Cohn's data set together with this record when using them.</p>",
+  "creators": [
+    {
+      "name": "Smolen, Christopher",
+      "orcid": "0009-0002-9537-7961"
+    }
+  ],
+  "license": "MIT",
+  "keywords": [
+    "spherical codes",
+    "Tammes problem",
+    "exact arithmetic",
+    "certified computation",
+    "verification"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "http://hdl.handle.net/1721.1/153543",
+      "relation": "isSupplementTo",
+      "scheme": "handle"
+    },
+    {
+      "identifier": "https://spherical-codes.org/",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ]
+}

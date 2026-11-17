@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: >-
+  If you use the certifier or the certified improvements, please cite this repository. For the table itself,
+  cite Henry Cohn's data set (below).
+title: "spherecert: an exact certifier for the table of spherical codes, with certified improvements"
+type: software
+authors:
+  - family-names: Smolen
+    given-names: Christopher
+    email: chrispbsmolen@gmail.com
+    orcid: "https://orcid.org/0009-0002-9537-7961"
+repository-code: "https://github.com/chrispbsmolen/spherecert"
+license: MIT
+keywords:
+  - spherical codes
+  - Tammes problem
+  - exact arithmetic
+  - certified computation
+  - verification
+references:
+  - type: dataset
+    title: "Table of spherical codes"
+    authors:
+      - family-names: Cohn
+        given-names: Henry
+    url: "https://hdl.handle.net/1721.1/153543"
