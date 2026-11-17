@@ -10,6 +10,8 @@ authors:
     email: chrispbsmolen@gmail.com
     orcid: "https://orcid.org/0009-0002-9537-7961"
 repository-code: "https://github.com/chrispbsmolen/spherecert"
+# Concept DOI (all versions); v2026.11.16 is 10.5281/zenodo.24299108.
+doi: "10.5281/zenodo.24299107"
 license: MIT
 keywords:
   - spherical codes

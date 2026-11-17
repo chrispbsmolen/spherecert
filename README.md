@@ -100,6 +100,13 @@ python3 make_readme.py                 # this file
 `lp_bound.py` computes the Delsarte linear programming bound, used only to gauge how much
 room an entry has; it plays no part in any verdict.
 
+## Citing
+
+Please cite this repository as: Christopher Smolen, spherecert: an exact certifier for the table of
+spherical codes, with certified improvements, Zenodo, doi:10.5281/zenodo.24299107 (all versions;
+version v2026.11.16 is doi:10.5281/zenodo.24299108). For the table itself, cite H. Cohn, Table of
+spherical codes, https://hdl.handle.net/1721.1/153543.
+
 ## Licence
 
 The code is under the MIT licence (`LICENSE`). The improved coordinate files in the release
